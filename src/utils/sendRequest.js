@@ -31,50 +31,8 @@ const sendRequest = async ({ url, method, body = null, isFormData = false, token
 
         return response.data;
     } catch (error) {
-        console.log({
-            "location":"sendRequest",
-            url,
-            method,
-            body,
-            token,
-            error: error.message
-        })
         console.error('Error in sendRequest:', error.message);
-        if(sendCurrentSockets && userId){
-            clientSockets = await client.sMembers(`userSockets:${userId}`);
-            for (const socketId of clientSockets) {
-                try {
-                    const socketData = JSON.parse(socketId);
-                    if (projectId && projectId == socketData.projectId) {
-                        io.to(socketData.socketId).emit('error', JSON.stringify({
-                            error: error.message,
-                            "reason":"Service axios error from this url "+url
-                        }));
-                    }
-                } catch (err) {
-                    console.error("Socket parse error:", err);
-                }
-            }
-        }else if(clientSockets){
-            for (const socketId of clientSockets) {
-                try {
-                    const socketData = JSON.parse(socketId);
-                    if (projectId && projectId == socketData.projectId) {
-                        io.to(socketData.socketId).emit('error', JSON.stringify({
-                            error: error.message,
-                            "reason":"Service axios error from this url "+url
-                        }));
-                    }
-                } catch (err) {
-                    console.error("Socket parse error:", err);
-                }
-            }
-        }
-        return {
-            type: "axios",
-            success: false,
-            message: error.response?.data || error.message
-        };
+        throw new HttpServerError("Error sending request");
     }
 }
 

@@ -10,7 +10,6 @@ const topicsControllers = {
     [topics.serviceStateCreatedQue]:serviceStateCreatedController,
     [topics.serviceStateUpdatedQue]:serviceStateUpdatedController,
     [topics.projectSateteUpdatedQue]:projectSateteUpdatedController,
-    // [topics.deployedStatusQue]:deployedStatusController
 }
 
 module.exports = async (io)=>{

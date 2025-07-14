@@ -27,9 +27,6 @@ const startService = async () => {
         await removeRedis("userSockets");
         await removeRedis("socketUser");
 
-        // await fixer();
-
-
         app.listen(port, () => {
             console.log(`Service started on ${port}`);
         });

@@ -13,10 +13,7 @@ const getServiceList = async ({projectId,token}) => {
 
         return response;  
     } catch (error) {
-        return {
-            success: false,
-            message: error.message
-        };
+        throw new HttpServerError("Error getting service list");
     } 
 }
 
