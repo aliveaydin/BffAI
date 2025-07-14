@@ -1,0 +1,126 @@
+stages:
+  - build
+  - sonarqube 
+  - manifest_update
+variables:
+  OPERATIONS_REPO_URL: "git@gitlab.hexaworks.com:mindbricks/mindbricks-operations.git"
+  VERS: $CI_COMMIT_SHORT_SHA
+  AWS_REGISTRY: 455385744192.dkr.ecr.us-east-2.amazonaws.com
+  AWS_DEFAULT_REGION: us-east-2
+
+
+build-image-stage:
+  image:
+    name: docker:latest
+    entrypoint: [""]
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - mkdir -p /home/gitlab-runner/.docker 
+    - echo '{"credsStore":"ecr-login"}' > /home/gitlab-runner/.docker/config.json
+    - docker build -t $AWS_REGISTRY/bff-ai:$VERS -f "${CI_PROJECT_DIR}/Dockerfile.stage" "${CI_PROJECT_DIR}"
+    - docker push $AWS_REGISTRY/bff-ai:$VERS
+
+
+build-image-prod:
+  image:
+    name: docker:latest
+    entrypoint: [""]
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "production"
+  script:
+    - mkdir -p /home/gitlab-runner/.docker 
+    - echo '{"credsStore":"ecr-login"}' > /home/gitlab-runner/.docker/config.json
+    - docker build -t $AWS_REGISTRY/bff-ai:$VERS -f "${CI_PROJECT_DIR}/Dockerfile" "${CI_PROJECT_DIR}"
+    - docker push $AWS_REGISTRY/bff-ai:$VERS
+
+build-image-beta:
+  image:
+    name: docker:latest
+    entrypoint: [""]
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "beta"
+  script:
+    - mkdir -p /home/gitlab-runner/.docker 
+    - echo '{"credsStore":"ecr-login"}' > /home/gitlab-runner/.docker/config.json
+    - docker build -t $AWS_REGISTRY/bff-ai:$VERS -f "${CI_PROJECT_DIR}/Dockerfile.beta" "${CI_PROJECT_DIR}"
+    - docker push $AWS_REGISTRY/bff-ai:$VERS
+
+    
+manifest_update_stage:
+  stage: manifest_update
+  script:
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git"
+    - cd mindbricks-operations/applications/stage/
+    - git config user.name "CI Bot"
+    - git config user.email "ci-bot@example.com"
+    - sed -i 's#\(image:.*/bff-ai:\)[a-f0-9]*\([a-f0-9]\{8\}\)#\1'"$VERS"'#' bff-ai-service.yaml
+    - git add bff-ai-service.yaml
+    - git commit -m "Update version to $VERS"
+    - git push "https://oauth2:${OPERATION_ACCESS_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git" HEAD:main
+# ArgoCD Sync
+    - >
+      ARGOCD_AUTH_TOKEN=$(curl -k -s -X POST "https://${ARGOCD_SERVER}/api/v1/session" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"$ARGOCD_USERNAME\",\"password\":\"$ARGOCD_PASSWORD\"}" \
+        | sed -E 's/.*"token":"([^"]+)".*/\1/');
+      curl -k -X POST "https://${ARGOCD_SERVER}/api/v1/applications/$ARGOCD_STAGE_PATH/sync" \
+        -H "Authorization: Bearer $ARGOCD_AUTH_TOKEN" \
+        -H "Content-Type: application/json"
+
+  only:
+    - main  
+
+manifest_update_prod:
+  stage: manifest_update
+  script:
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git"
+    - cd mindbricks-operations/applications/prod/
+    - git config user.name "CI Bot"
+    - git config user.email "ci-bot@example.com"
+    - sed -i 's#\(image:.*/bff-ai:\)[a-f0-9]*\([a-f0-9]\{8\}\)#\1'"$VERS"'#' bff-ai-service.yaml
+    - git add bff-ai-service.yaml
+    - git commit -m "Update version to $VERS"
+    - git push "https://oauth2:${OPERATION_ACCESS_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git" HEAD:main
+# ArgoCD Sync
+    - >
+      ARGOCD_AUTH_TOKEN=$(curl -k -s -X POST "https://${ARGOCD_SERVER}/api/v1/session" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"$ARGOCD_USERNAME\",\"password\":\"$ARGOCD_PASSWORD\"}" \
+        | sed -E 's/.*"token":"([^"]+)".*/\1/');
+      curl -k -X POST "https://${ARGOCD_SERVER}/api/v1/applications/$ARGOCD_PROD_PATH/sync" \
+        -H "Authorization: Bearer $ARGOCD_AUTH_TOKEN" \
+        -H "Content-Type: application/json"
+
+  only:
+    - production  
+
+
+manifest_update_beta:
+  stage: manifest_update
+  script:
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git"
+    - cd mindbricks-operations/applications/beta/
+    - git config user.name "CI Bot"
+    - git config user.email "ci-bot@example.com"
+    - sed -i 's#\(image:.*/bff-ai:\)[a-f0-9]*\([a-f0-9]\{8\}\)#\1'"$VERS"'#' bff-ai-service.yaml
+    - git add bff-ai-service.yaml
+    - git commit -m "Update version to $VERS"
+    - git push "https://oauth2:${OPERATION_ACCESS_TOKEN}@gitlab.hexaworks.com/mindbricks/mindbricks-operations.git" HEAD:main
+# ArgoCD Sync
+    - >
+      ARGOCD_AUTH_TOKEN=$(curl -k -s -X POST "https://${ARGOCD_SERVER}/api/v1/session" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"$ARGOCD_USERNAME\",\"password\":\"$ARGOCD_PASSWORD\"}" \
+        | sed -E 's/.*"token":"([^"]+)".*/\1/');
+      curl -k -X POST "https://${ARGOCD_SERVER}/api/v1/applications/$ARGOCD_BETA_PATH/sync" \
+        -H "Authorization: Bearer $ARGOCD_AUTH_TOKEN" \
+        -H "Content-Type: application/json"
+
+  only:
+    - beta  
+
+

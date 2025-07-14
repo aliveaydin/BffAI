@@ -1,0 +1,38 @@
+{
+    "agents": [
+        {
+            "project-manager": [
+                "Project Description And Scope",
+                "User Stories",
+                "Product Requirements Document"
+            ],
+            "statuses":[
+                "designing",
+                "designed"
+            ]
+        },
+        {
+            "business-analyst": [
+                "Use Cases"
+            ],
+            "statuses":[
+                "designing",
+                "designed"
+            ]
+        },
+        {
+            "software-architect":[],
+            "statuses": [
+                "designing",
+                "designed"
+            ]
+        },
+        {
+            "software-engineer": [],
+            "statuses":[
+                "designing",
+                "designed"
+            ]
+        }
+    ]
+}
