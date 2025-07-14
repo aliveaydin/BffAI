@@ -25,8 +25,10 @@ const checkIsUserLogged = async (token,projectId) => {
         return { email,userId };
 
     } catch (error) {
-        console.log(error);
-        return false;
+        if (error.status) {
+            throw error;
+        }
+        throw new NotAuthorizedError("User is not authorized");
     }
 }
 

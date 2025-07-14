@@ -24,16 +24,8 @@ const sendPostFormData = async ({ url, body = null }) => {
 
         return response.data;
     } catch (error) {
-        console.log({
-            "location":"sendPostFormData",
-            url,
-            body
-        })
         console.error('Error in sendPostRequest:', error.message);
-        return {
-            success: false,
-            message: error.response?.data || error.message
-        };
+        throw new HttpServerError("Error sending post form data");
     }
 };
 

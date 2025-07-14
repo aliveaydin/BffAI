@@ -1,5 +1,5 @@
 const { HttpServerError, NotAuthorizedError, BadRequestError, NotFoundError } = require('../utils/errors');
-const checkProjectCreatedOnSaas = require('./checkProjectCreatedOnSaas');
+const checkProjectCreatedOnSaaS = require('./checkProjectCreatedOnSaaS');
 const checkUserAuthority = require('./checkUserAuthority');
 
 const checkProjectAndPermission = async ({

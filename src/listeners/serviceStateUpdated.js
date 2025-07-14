@@ -1,11 +1,11 @@
 const ServiceList = require("../models/ServiceList");
-const SystemService = require("../models/SystemService");
 const { client } = require("../../redis");
 const getElastic = require("../elastic-utils/getElastic");
 const fixServiceListSorting = require("../utils/fixServiceListSorting");
 const Gitlab = require("../models/Gitlab");
 const { sendMessage } = require("../utils/kafka");
 const sendRequest = require("../utils/sendRequest");
+const { createGitlabRepo, startPreview } = require("./serviceStateHelpers");
 
 const serviceStateUpdatedController = async (topic, partition, message, io) => {
   try {
@@ -56,23 +56,7 @@ const serviceStateUpdatedController = async (topic, partition, message, io) => {
       let gitlabId, repo;
       status = "building";
       try {
-        repo = await sendRequest({
-          url: `${process.env.JOB_SERVICE_URL}api/genesis/getrepo`,
-          method: "POST",
-          body: { serviceName: newName, projectId, repoVersion },
-          token,
-        });
-        if (repo) {
-          sendMessage("mindbricks-bff-service-preview-gitlab-project", {
-            data,
-            repo,
-          });
-        }
-
-        repoUrl = repo?.gitlabProject?.web_url;
-        webUrl = repo?.gitlabProject?.web_url;
-        groupId = repo?.gitlabProject?.web_url;
-
+        repo = await createGitlabRepo(newName, projectId, token);
         status = "built";
         gitlabId = repo?.gitlabProject?.id;
 
@@ -80,23 +64,12 @@ const serviceStateUpdatedController = async (topic, partition, message, io) => {
           projectId,
           name: oldName,
           gitlabId,
-          repoUrl,
-          webUrl,
-          groupId,
+          repoUrl: repo?.gitlabProject?.web_url,
+          webUrl: repo?.gitlabProject?.web_url,
+          groupId: repo?.gitlabProject?.group_id
         });
 
-        console.log({
-          preivew:{
-            serviceName: newName, projectId, type:"updated", gitlabId
-          }
-        })
-
-        const preview = await sendRequest({
-          url: `${process.env.JOB_SERVICE_URL}api/genesis/startpreview`,
-          method: "POST",
-          body: { serviceName: newName, projectId, gitlabId },
-          token,
-        });
+        const preview = await startPreview(newName, projectId, gitlabId, token);
         status = "started";
         subDomain = preview?.subdomain;
       } catch (error) {

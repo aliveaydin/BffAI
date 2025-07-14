@@ -8,22 +8,20 @@ const errorHandler = require("./utils/errorHandler.js");
 const checkIsUserLogged = require("./utils/checkIsUserLogged.js");
 
 const isDev = process.env.NODE_ENV === 'development';
-const {
-  approve,
-  connected,
-  disconnect,
-  approveList,
-  messageHistory,
-  agentStatus,
-  prompt,
-  microServiceList,
-  systemServiceList,
-  logsHistory,
-  log,
-  chatLastLog,
-  coreConfig,
-  projectVersion
-} = require("./utils/socketHandlers");
+const approve = require("./socket-handlers/approve");
+const connected = require("./socket-handlers/connected");
+const disconnect = require("./socket-handlers/disconnect");
+const approveList = require("./socket-handlers/approveList");
+const messageHistory = require("./socket-handlers/messageHistory");
+const agentStatus = require("./socket-handlers/agentStatus");
+const prompt = require("./socket-handlers/prompt");
+const microServiceList = require("./socket-handlers/microServiceList");
+const systemServiceList = require("./socket-handlers/systemServiceList");
+const logsHistory = require("./socket-handlers/logsHistory");
+const log = require("./socket-handlers/log");
+const chatLastLog = require("./socket-handlers/chatLastLog");
+const coreConfig = require("./socket-handlers/coreConfig");
+const projectVersion = require("./socket-handlers/projectVersion");
 
 const path = require("path");
 const cors = require("cors");
@@ -120,7 +118,6 @@ const postVersions = require("./routes/post-version.js");
 
 
 app.use("/api/bff-ai",postCreateProject);
-// app.use("/api/bff-ai",postProjectManagerChat); socket promt using
 app.use("/api/bff-ai",softwareArchitect);
 app.use("/api/bff-ai",softwareEngineer);
 app.use("/api/bff-ai",chatHistory);
